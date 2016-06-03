@@ -778,7 +778,7 @@ def pyclass2predef(fw, module_name, type_name, value):
 
 def pymodule2predef(BASEPATH, module_name, module, title):
     attribute_set = set()
-    filepath = os.path.join(BASEPATH, module_name + ".pypredef")
+    filepath = os.path.join(BASEPATH, module_name + ".py")
 
     file = open(filepath, "w")
     fw = file.write
@@ -994,7 +994,7 @@ def bpy2predef(BASEPATH, title):
     #read all data:
     structs, funcs, ops, props = rna_info.BuildRNAInfo()
     #open the file:
-    filepath = os.path.join(BASEPATH, "bpy.pypredef")
+    filepath = os.path.join(BASEPATH, "bpy.py")
     file = open(filepath, "w")
     fw = file.write
     #Start the file:
