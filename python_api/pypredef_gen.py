@@ -1119,10 +1119,13 @@ def main():
         import imp
         imp.reload(rna_info) #to avoid repeated arguments in function definitions on second and the next runs - a bug in rna_info.py....
 
-        if os.path.exists(__file__): #program run from text window has non-existing path ("/" - the root)
+        if len(bpy.data.filepath)==0 or __file__[:len(bpy.data.filepath)] != bpy.data.filepath:
             script_dir = os.path.dirname(__file__)
         else:
-            script_dir = os.path.join(os.path.curdir) #current directory (where the blender.exe resides)
+            #program run from text window has wacky filename
+            buffer_name = __file__[len(bpy.data.filepath) + 1:]
+            buffer = bpy.data.texts[buffer_name]
+            script_dir = os.path.dirname(buffer.filepath) #directory where this pypredef_gen.py script lives
 
         path_in = os.path.join(script_dir, "pypredef")
         # only for partial updates
