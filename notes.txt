@@ -1,3 +1,0 @@
-This source code is derived from pydev-blender.zip at
-http://airplanes3d.net/pydev-000_e.xml
-
