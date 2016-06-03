@@ -39,6 +39,8 @@ This program is based on Campbell Barton's sphinx_doc_gen.py script
 #            * Remove the "import" class because it is a reserved keyword.
 #2013-03-14: Further updates: I have found another function (py_c_func2predef()) which was ommited in
 #            the Brian update. I added the "pass" statement generation there.
+
+#2016-June: modifications by Robert Forsman for use with pycharm
 script_help_msg = '''
 Usage:
 - Run this script from blenders root path:
@@ -1004,11 +1006,6 @@ def bpy2predef(BASEPATH, title):
     fw(definition["docstring"])
     fw("\n\n")
 
-    #the data members:
-    property2predef("", fw, bpy, "context")
-
-    property2predef("", fw, bpy, "data")
-
     #group operators by modules: (dictionary of list of the operators)
     op_modules = {}
     for op in ops.values():
@@ -1037,6 +1034,11 @@ def bpy2predef(BASEPATH, title):
         # skip the operators!
         if "_OT_" not in cls.identifier:
             rna_struct2predef(_IDENT, fw, cls)
+
+    #the data members:
+    property2predef("", fw, bpy, "context")
+
+    property2predef("", fw, bpy, "data")
 
     file.close()
 
