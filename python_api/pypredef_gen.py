@@ -79,6 +79,8 @@ INCLUDE_MODULES = (
     "bpy.path",
     "bpy.props",
     "bpy.utils",
+    "bmesh",
+    "bmesh.types",
     "bge",
     "aud",
     "bgl",
@@ -1092,6 +1094,14 @@ def rna2predef(BASEPATH):
     if "aud" in INCLUDE_MODULES:
         import aud as module
         pymodule2predef(BASEPATH, "aud", module, "Audio System (aud)")
+
+    if "bmesh" in INCLUDE_MODULES:
+        import bmesh as module
+        pymodule2predef(BASEPATH, "bmesh", module, "BMesh mesh manipulations (bmesh)")
+
+    if "bmesh.types" in INCLUDE_MODULES:
+        import bmesh.types as module
+        pymodule2predef(BASEPATH, "bmesh.types", module, "BMesh mesh manipulations types (bmesh.types)")
 
     del module
 
