@@ -18,19 +18,19 @@
 # ***** End GPL LICENSE BLOCK *****
 '''
 Creates Python predefinition (*.pypredef) files for Blender API
-The *.pypredef files are useful for syntax checking and 
+The *.pypredef files are useful for syntax checking and
 auto-completion of expressions in Eclipse IDE (with PyDev plugin)
 
 This program is based on Campbell Barton's sphinx_doc_gen.py script
-  
+
 @author: Witold Jaworski (http://www.airplanes3d.net)
 '''
 #FIXES/UPDATES:
 #2012-03-01: In Blender 2.62 the description of the @roll argument in EditBone.transform()
 #            method has an unexpected empty line, which break processing. Added handling
 #            for that case in process_line() method
-#2013-03-01: In Blender 2.66 two methods of the bpy.types.Space obejects are reported as 
-#            Python - implemented methods, while tehy are not: 
+#2013-03-01: In Blender 2.66 two methods of the bpy.types.Space obejects are reported as
+#            Python - implemented methods, while tehy are not:
 #            draw_handler_add() and draw_handler_remove()
 #            I have added additional try.. except caluse to hande such errors in the future
 #            (However, as long as the descriptions of these methods are wrong, tehy are not documented)
@@ -53,12 +53,12 @@ Usage:
 '''
 Comments to using the pypredef files in Eclipse:
 1. Add the directory that contains the *.pypredef files to PYTHONPATH of your project:
-    - Open Project-->Properties window. 
-    - Select PyDev - PYTHONPATH option. 
+    - Open Project-->Properties window.
+    - Select PyDev - PYTHONPATH option.
     - In External Libraries tab add this directory to the list.
 2. In the same tab (External Libraries) press the button [Force restore internal info]
 
-NOTE: The completion may sometimes appear after a 1-2s. delay. 
+NOTE: The completion may sometimes appear after a 1-2s. delay.
 When you type "." it doesn't, But when you remove it, and type again ".", it appears!
 
 NOTE: In case of specific bpy.app submodule, use it in your code in the following way:
@@ -90,7 +90,7 @@ INCLUDE_MODULES = (
 _BPY_STRUCT_FAKE = "bpy_struct"
 _BPY_FULL_REBUILD = False
 _IDENT = "   "
-    
+
 #dictionary, used to correct some type descriptions:
 TYPE_ABERRATIONS = {
         "boolean"   : "bool",
@@ -103,7 +103,7 @@ TYPE_ABERRATIONS = {
         "Color"     : "mathutils.Color",
         "Euler"     : "mathutils.Euler",
         "subclass of bpy_struct" : "bpy_struct",
-        "subclass of bpy.types.bpy_struct" : "bpy_struct", 
+        "subclass of bpy.types.bpy_struct" : "bpy_struct",
         "bpy.types.FCurve or list if index is -1 with an array property." : "bpy.types.FCurve",
         "float triplet": "(float, float, float)",
         "string in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX']" : "str #in ['XYZ', 'XZY', 'YXZ', 'YZX', 'ZXY', 'ZYX']",
@@ -133,7 +133,7 @@ class _example:
     @property
     def a_property(self):
         return None
-    
+
     @classmethod
     def a_classmethod(cls):
         return None
@@ -141,22 +141,22 @@ class _example:
     @staticmethod
     def a_staticmethod():
         return None
-    
+
 PropertyType = type(_example.a_property)
-ClassMethodType = type(_example.__dict__["a_classmethod"])    
-StaticMethodType = type(_example.__dict__["a_staticmethod"])    
+ClassMethodType = type(_example.__dict__["a_classmethod"])
+StaticMethodType = type(_example.__dict__["a_staticmethod"])
 ClassMethodDescriptorType = type(dict.__dict__['fromkeys'])
 MethodDescriptorType = type(dict.get)
 GetSetDescriptorType = type(int.real)
 #---- end "learning by example"
-   
+
 def write_indented_lines(ident, fn, text, strip=True):
     ''' Helper function. Apply same indentation to all lines in a multilines text.
         Details:
         @ident (string): the required prefix (spaces)
         @fn (function): the print() or file.write() function
         @text (string): the lines that have to be shifted right
-        @strip (boolean): True, when the lines should be stripped 
+        @strip (boolean): True, when the lines should be stripped
                           from leading and trailing spaces
     '''
     if text is None:
@@ -166,13 +166,13 @@ def write_indented_lines(ident, fn, text, strip=True):
             fn(ident + l.strip() + "\n")
         else:
             fn(ident + l + "\n")
-            
+
 #Helper functions, that transforms the RST doctext like this:
 #   .. method:: from_pydata(vertices, edges, faces)
 #
 #     Make a mesh from a list of verts/edges/faces
 #     Until we have a nicer way to make geometry, use this.
-#     
+#
 #     :arg vertices: float triplets each representing (X, Y, Z) eg: [(0.0, 1.0, 0.5), ...].
 #     :type vertices: iterable object
 #     :arg edges: int pairs, each pair contains two indices to the *vertices* argument. eg: [(1, 2), ...]
@@ -207,7 +207,7 @@ def rst2list(doc):
                          "type": argument's type (may be a class name)
                          "description": argument's description
                          "ord": nr kolejny
-                 ["@returns":] 
+                 ["@returns":]
                          optional: what function/property returns:
                          "description": description of the content
                          "type":        the name of returned type
@@ -222,13 +222,13 @@ def rst2list(doc):
                          "ord": nr kolejny
     '''
     def process_line(line, definition, last_entry):
-        '''Helper function, that analyzes the line and tries to place the 
+        '''Helper function, that analyzes the line and tries to place the
            information it contains into "working definition"
            Arguments:
            @line (string): single line of the description
            @definition (dictionary of dictionaries): working definition of the member
            @last_entry (string): the key in definition, which was used lately (before this call)
-           
+
            Returns: updated last_entry (string)
         '''
         def type_name(line):
@@ -240,15 +240,15 @@ def rst2list(doc):
             expr = line.split(" ",1) #split ":type: float" into (':type:','float')
             if len(expr) < 2: return None #we cannot identify it!
             result = expr[1].strip()
-            if result in TYPE_ABERRATIONS: 
+            if result in TYPE_ABERRATIONS:
                 return TYPE_ABERRATIONS[result]
             else:
                 return result
-             
+
         line = line.lstrip(" ")
-        line = line.replace(":class:","").replace("`","") #replace occurences of ":class:`<TypeName>`" 
+        line = line.replace(":class:","").replace("`","") #replace occurences of ":class:`<TypeName>`"
         #                                                  with "<TypeName>"
-        line = line.replace(":exc:","").replace("`","") #replace occurences of ":exc:`<TypeName>`" 
+        line = line.replace(":exc:","").replace("`","") #replace occurences of ":exc:`<TypeName>`"
         #                                                  with "<TypeName>"
         if line.startswith(".. method::") or line.startswith(".. function::") or line.startswith(".. classmethod::"):
             prototype = (line.split("::",1)[1]).lstrip(" ")
@@ -265,7 +265,7 @@ def rst2list(doc):
         elif line.startswith(":type:"): #property type
             expr = type_name(line)
             if expr: definition["@def"].setdefault("type",expr)
-            last_entry = "@def" 
+            last_entry = "@def"
         elif line.startswith(":return:"): #return description
             expr = line.split(" ",1)
             name = "@returns"
@@ -280,9 +280,9 @@ def rst2list(doc):
             name = expr[1].rstrip(":")
             try:
                 definition[name].setdefault("type",expr[2])
-                last_entry = name 
+                last_entry = name
             except:
-                print("Missing argument declaration for '%s'" % name) 
+                print("Missing argument declaration for '%s'" % name)
         elif line.startswith(".. note:: "): #note to member description
             line = line.replace(".. note:: ","")
             name = "@note"
@@ -295,38 +295,38 @@ def rst2list(doc):
             last_entry = name
         elif line.startswith(".. literalinclude::"):
             pass #skip this line
-        else: #this is just second line of description for the last entry 
+        else: #this is just second line of description for the last entry
             #  (whole member, or just an single argument)
             if last_entry in definition and line != "" and not line.startswith("Undocumented"):
                 item = definition[last_entry]
                 if "description" not in item:
                     item.setdefault("description",line)
                 else:
-                    item["description"] = item["description"] + line + "\n"   
+                    item["description"] = item["description"] + line + "\n"
         return last_entry
     #--------------------------------- process_line
     lines = doc.split("\n")
     last_key = "@def"
     definition = {last_key:{"description":"", "ord":0}} #at the beginning: empty description of function definition
-     
+
     for line in lines:
         last_key = process_line(line,definition,last_key)
     #now let's check the result, stored in <definition> dictionary:
     return definition
 
 def get_item(dictionary,key):
-    '''Helper function. Returns the dictionary element at key, or None 
+    '''Helper function. Returns the dictionary element at key, or None
         Arguments:
         @dictionary: the dictionary which will be searched
         @key:        the key in the dictionary
     '''
-    if key in dictionary: 
+    if key in dictionary:
         return dictionary[key]
-    else: 
+    else:
         return None
-    
+
 def rna2list(info):
-    ''' Prepares list of definition elements 
+    ''' Prepares list of definition elements
         Arguments:
         @info (one of rna_info.Info*RNA types) - the descriptor of Struct, Operator, Function or Property
         Returns: dictionary of the same structure, like the one returned by rst2list()
@@ -344,7 +344,7 @@ def rna2list(info):
                          "type": argument's type (may be a class name)
                          "description": argument's description
                          "ord": ordinal number
-                 ["@returns":] 
+                 ["@returns":]
                          optional: what function/property returns:
                          "description": description of the content
                          "type":        the name of returned type
@@ -357,7 +357,7 @@ def rna2list(info):
                          optional: reference, added to description (below argument list)
                          "description": description of the content
                          "ord": oridinal number
-        
+
     '''
     def type_name(name, include_namespace=False):
         ''' Helper function, that corrects some wrong type names
@@ -366,18 +366,18 @@ def rna2list(info):
             @include_namespace: True, when append the bpy.types. prefix
             returns the corrected type name (string)
         '''
-        if name in TYPE_ABERRATIONS: 
+        if name in TYPE_ABERRATIONS:
             name = TYPE_ABERRATIONS[name]
         if include_namespace:
             name = "types." + name
-        return name    
-    
+        return name
+
     def get_argitem(arg, prev_ord, is_return=False):
-        '''Helper function, that creates an argument definition subdictionary 
+        '''Helper function, that creates an argument definition subdictionary
            Arguments:
            @arg (rna_info.InfoPropertyRNA): descriptor of the argument
            @prev_ord (int): previous order index (to set the value for the "ord" key)
-           
+
            Returns: an definistion subdictionary (keys: "name", "type", "description", "ord")
         '''
         if arg.fixed_type:
@@ -388,30 +388,30 @@ def rna2list(info):
             description = arg.get_type_description(as_ret = True) #without default value!
         else:
             description = arg.get_type_description(as_arg = True) #without default value!
-            
-        if arg.collection_type == None:    
+
+        if arg.collection_type == None:
             description = description.replace(arg_type, "", 1) #remove the first occurence of type name - it repeats the declaration!
-            
+
         if description.startswith(","): #it may happen, when the arg_type was at the begining of the string:
             description = (description[1:]) #skip the leading colon
-        if description.startswith(" "): 
+        if description.startswith(" "):
             description = (description[1:]) #skip first space
-            
-        #add some human comments (if it exists):    
-        if arg.description: 
+
+        #add some human comments (if it exists):
+        if arg.description:
             description = arg.description + "\n" + _IDENT + description
-        
+
         if is_return:
             return {"name":"returns", "description":description, "type":type_name(arg_type, arg.fixed_type != None), "ord":(prev_ord + 1)}
         else:
             return {"name":arg.identifier, "description":description, "type":type_name(arg_type), "ord":(prev_ord + 1)}
-    
+
     def get_return(returns, prev_ord):
-        '''Helper function, that creates the return definition subdictionary ("@returns") 
+        '''Helper function, that creates the return definition subdictionary ("@returns")
            Arguments:
            @returns (list of rna_info.InfoPropertyRNA): descriptor of the return values
            @prev_ord (int): previous order index (to set the value for the "ord" key)
-           
+
            Returns: an definistion subdictionary (keys: type", "description", "ord")
         '''
         if len(returns) == 1:
@@ -422,11 +422,11 @@ def rna2list(info):
                 item = get_argitem(ret, prev_ord, is_return = True)
                 description = description + "\n{0}{1}({2}):{3}".format(_IDENT, ret.identifier, item.pop("type"), item.pop("description"))
             #give just the description, not the type!
-            description = description + "\n)"    
+            description = description + "\n)"
             return {"name":"returns", "description":description, "ord":(prev_ord + 1)}
-            
+
     definition = {"@def":{"description":"", "ord":0}} #at the beginning: empty description of function definition
-    
+
     if type(info) == rna_info.InfoStructRNA:
         #base class of this struct:
         base_id = getattr(info.base,"identifier",_BPY_STRUCT_FAKE)
@@ -434,7 +434,7 @@ def rna2list(info):
         definition["@def"].setdefault("prototype",prototype)
         definition["@def"]["description"] = info.description
         definition["@def"].setdefault("hint","class")
-        
+
     elif type(info) == rna_info.InfoPropertyRNA:
         if info.collection_type:
             prop_type = info.collection_type.identifier
@@ -443,17 +443,17 @@ def rna2list(info):
         else:
             prop_type = info.type
         prototype = "{0} = {1}".format(info.identifier, type_name(prop_type, info.fixed_type != None))
-        if info.is_readonly: 
+        if info.is_readonly:
             prototype = prototype + " # (read only)"
-             
+
         definition["@def"].setdefault("prototype",prototype)
         definition["@def"].setdefault("hint","property")
-        
-        if info.description: 
+
+        if info.description:
             definition["@def"]["description"] = info.description
-            
+
         definition.setdefault("@returns",{"name" : "returns", "description" : info.get_type_description(as_ret = True), "ord" : 1})
-        
+
     elif type(info) == rna_info.InfoFunctionRNA:
         args_str = ", ".join(prop.get_arg_default(force=False) for prop in info.args)
         prototype = "{0}({1})".format(info.identifier, args_str)
@@ -481,7 +481,7 @@ def rna2list(info):
             definition.setdefault(arg.identifier, get_argitem(arg,len(definition)))
     else:
         raise TypeError("type was not InfoFunctionRNA, InfoStructRNA, InfoPropertyRNA or InfoOperatorRNA")
-    
+
     return definition
 
 def doc2definition(doc,docstring_ident=_IDENT):
@@ -491,7 +491,7 @@ def doc2definition(doc,docstring_ident=_IDENT):
                             or ready dictionary of dictionaries, like the result of rst2list() (see above)
     @docstring_ident (string) - the amount of spaces before docstring markings
     @function - function, that should be used to get the list
-    Returns: dictionary with following elements: 
+    Returns: dictionary with following elements:
              "declaration": function declaration (may be omitted for attributes docstrings)
              "docstring": properly idented docstring (leading and trailing comment markings included)
              "returns": type, returned by property/function (to use in eventual return statement)
@@ -502,11 +502,11 @@ def doc2definition(doc,docstring_ident=_IDENT):
             @definition: dictionary[key]
             @key:        the key in the definition dictionary
         '''
-        if key in definition: 
+        if key in definition:
             return definition.pop(key)
-        else: 
+        else:
             return None
-        
+
     def format_arg(data):
         '''Returns line of text, describing an argument or return statement
             Arguments:
@@ -533,25 +533,25 @@ def doc2definition(doc,docstring_ident=_IDENT):
         if key in definition:
             if subkey in definition[key]:
                 return definition[key][subkey]
-            else: 
+            else:
                 return None
         else:
             return None
-        
-    if doc is None: 
+
+    if doc is None:
         return {"docstring" : docstring_ident + "\n"}
-    
-    if type(doc) is str : 
+
+    if type(doc) is str :
         definition = rst2list(doc)
     else:
         definition = doc #assume, that doc is the ready definition list!
-        
+
     rtype = get(definition,"@def","type")
-    if rtype is None: 
+    if rtype is None:
         rtype = get(definition,"@returns","type") #for functions
-    
+
     _returns = pop(definition, "@returns")
-        
+
     _note = pop(definition,"@note")
 
     _seealso = pop(definition, "@seealso")
@@ -566,49 +566,49 @@ def doc2definition(doc,docstring_ident=_IDENT):
             declaration = decorator + "def " + declaration +":"
         else:
             declaration = "def " + declaration +":"
-    
+
     _def = pop(definition, "@def") #remove the definition from the list....
-        
+
     ident = docstring_ident + _IDENT #all next row will have additional ident, to match the first line
     lines = [] #lines of the docstring text
-    
+
     al = lines.append #trick, to re-use the write_indented_lines to add the line
-    
+
     if "description" in _def:
         write_indented_lines(ident,al,_def["description"],False) #fill the <lines> list
-        if lines: 
+        if lines:
             lines[0] = lines[0][len(ident):] #skip the ident in the first and the last line:
             #                                 (the docstring's prefix "   '''" will be placed there)
-            
+
     if definition.keys(): #Are named arguments there?
         write_indented_lines(ident,al,"Arguments:",False)
-            
+
         for tuple in sorted(definition.items(),key = lambda item: item[1]["ord"]): #sort the lines in the original sequence
-            #first item of the <tuple> is the key, second - the value (dictionary describing a single element) 
+            #first item of the <tuple> is the key, second - the value (dictionary describing a single element)
             write_indented_lines(ident,al,format_arg(tuple[1]),False)
         #end for
         al("\n")
-        
-    if _returns: 
+
+    if _returns:
             write_indented_lines(ident,al,format_arg(_returns),False)
-        
-    if _note and "description" in _note: 
+
+    if _note and "description" in _note:
         write_indented_lines(ident,al,"Note: " + _note["description"],False)
-        
-    if _seealso and "description" in _seealso: 
+
+    if _seealso and "description" in _seealso:
         write_indented_lines(ident,al,"(seealso " + _seealso["description"]+")\n",False)
-        
+
     if not lines:
         lines.append("<not documented>\n")
- 
+
     result = {"docstring" : docstring_ident + "'''" + "".join(lines)+ docstring_ident  + "'''\n"}
-    
+
     if declaration:
         result.setdefault("declaration",declaration)
-        
+
     if rtype:
         result.setdefault("returns",rtype)
-            
+
     return result
 
 def pyfunc2predef(ident, fw, identifier, py_func, is_class=True):
@@ -618,52 +618,52 @@ def pyfunc2predef(ident, fw, identifier, py_func, is_class=True):
         @fw (function): the unified shortcut to print() or file.write() function
         @identifier (string): the name of the member
         @py_func (<py function>): the method, that is being described here
-        @is_class (boolean): True, when it is a class member 
+        @is_class (boolean): True, when it is a class member
     '''
     try:
         arguments = inspect.getargspec(py_func)
         if len(arguments.args) == 0 and is_class:
             fw(ident+"@staticmethod\n")
         elif len(arguments.args)==0: #global function (is_class = false)
-            pass    
+            pass
         elif arguments.args[0] == "cls" and is_class:
             fw(ident+"@classmethod\n")
         else: #global function
             pass
-        
+
         definition = doc2definition(py_func.__doc__) #parse the eventual RST sphinx markup
-        
+
         if "declaration" in definition:
             write_indented_lines(ident,fw, definition["declaration"],False)
         else:
             arg_str = inspect.formatargspec(*arguments)
             fmt = ident + "def %s%s:\n"
             fw(fmt % (identifier, arg_str))
-        
-        if "docstring" in definition: 
+
+        if "docstring" in definition:
             write_indented_lines(ident,fw,definition["docstring"],False)
 
-        if "returns" in definition: 
+        if "returns" in definition:
             write_indented_lines(ident+_IDENT,fw,"return " + definition["returns"],False)
         else:
             write_indented_lines(ident+_IDENT,fw,"pass",False)
-            
+
         fw(ident + "\n")
     except:
         msg = "#unable to describe the '%s' method due to internal error\n\n" % identifier
         fw(ident + msg)
-        
+
 def py_descr2predef(ident, fw, descr, module_name, type_name, identifier):
     ''' Creates declaration of a function or class method
         Details:
         @ident (string): the required prefix (spaces)
         @fw (function): the unified shortcut to print() or file.write() function
         @descr(<type descriptor>): an object, describing the member
-        @module_name (string): the name of this module 
-        @type_name (string): the name of the containing class 
+        @module_name (string): the name of this module
+        @type_name (string): the name of the containing class
         @identifier (string): the name of the member
     '''
-    
+
     if identifier.startswith("_"):
         return
 
@@ -673,12 +673,12 @@ def py_descr2predef(ident, fw, descr, module_name, type_name, identifier):
             returns = definition["returns"]
         else:
             returns = "None"    #we have to assign just something, to be properly parsed!
-            
-        fw(ident + identifier + " = " + returns + "\n") 
-            
-        if "docstring" in definition: 
+
+        fw(ident + identifier + " = " + returns + "\n")
+
+        if "docstring" in definition:
             write_indented_lines(ident,fw,definition["docstring"],False)
-        
+
     elif type(descr) in (MethodDescriptorType, ClassMethodDescriptorType):
         py_c_func2predef(ident,fw,module_name,type_name,identifier,descr,True)
     else:
@@ -693,27 +693,27 @@ def py_c_func2predef(ident, fw, module_name, type_name, identifier, py_func, is_
         @fw (function): the unified shortcut to print() or file.write() function
         @type_name (string): the name of the class
         @py_func (<py function>): the method, that is being described here
-        @is_class (boolean): True, when it is a class member 
+        @is_class (boolean): True, when it is a class member
     '''
     definition = doc2definition(py_func.__doc__) #parse the eventual RST sphinx markup
     if type(py_func)== ClassMethodDescriptorType:
         fw(ident+"@classmethod\n")
-        
+
     if "declaration" in definition:
         write_indented_lines(ident,fw, definition["declaration"],False)
     else:
         fw(ident + "def %s(*argv):\n" % identifier)#*argv, because we do not know about its arguments....
-    
-    if "docstring" in definition: 
+
+    if "docstring" in definition:
         write_indented_lines(ident,fw,definition["docstring"],False)
 
-    if "returns" in definition: 
+    if "returns" in definition:
         write_indented_lines(ident+_IDENT,fw,"return " + definition["returns"],False)
     else:
         write_indented_lines(ident+_IDENT,fw,"pass",False)
 
     fw(ident + "\n")
-        
+
 
 def pyprop2predef(ident, fw, identifier, py_prop):
     ''' Creates declaration of a property
@@ -728,15 +728,15 @@ def pyprop2predef(ident, fw, identifier, py_prop):
         declaration = identifier + " = " + definition["returns"]
     else:
         declaration = identifier + " = None"    #we have to assign just something, to be properly parsed!
-    
+
     # readonly properties use "data" directive, variables use "attribute" directive
     if py_prop.fset is None: declaration = declaration + " # (readonly)"
-    
+
     fw(ident + declaration + "\n")
-        
+
     if "docstring" in definition:
         write_indented_lines(ident, fw, definition["docstring"], False)
-        
+
     fw(ident + "\n")
 
 def pyclass2predef(fw, module_name, type_name, value):
@@ -757,7 +757,7 @@ def pyclass2predef(fw, module_name, type_name, value):
     for key, descr in descr_items:
         if type(descr) == ClassMethodDescriptorType:
             py_descr2predef(_IDENT, fw, descr, module_name, type_name, key)
-        
+
     for key, descr in descr_items:
         if type(descr) == MethodDescriptorType:
             py_descr2predef(_IDENT, fw, descr, module_name, type_name, key)
@@ -783,12 +783,12 @@ def pymodule2predef(BASEPATH, module_name, module, title):
     file = open(filepath, "w")
     fw = file.write
     #fw = print
-    
+
     #The description of this module:
     if module.__doc__:
         title = title + "\n" + module.__doc__
-    definition = doc2definition(title,"") #skip the leading spaces at the first line... 
-    fw(definition["docstring"]) 
+    definition = doc2definition(title,"") #skip the leading spaces at the first line...
+    fw(definition["docstring"])
     fw("\n\n")
 
     # write members of the module
@@ -801,7 +801,7 @@ def pymodule2predef(BASEPATH, module_name, module, title):
         if type(descr) == types.GetSetDescriptorType :  # 'bpy_app_type' name is only used for examples and messages
             py_descr2predef("", fw, descr, module_name, "bpy_app_type", key)
             attribute_set.add(key)
-            
+
     # Then list the attributes:
     for key, descr in sorted(type(module).__dict__.items()):
         if key.startswith("__"):
@@ -810,9 +810,9 @@ def pymodule2predef(BASEPATH, module_name, module, title):
         if type(descr) == types.MemberDescriptorType:  # 'bpy_app_type' name is only used for examples and messages
             py_descr2predef("", fw, descr, module_name, "", key)
             attribute_set.add(key)
-            
+
     del key, descr
-    
+
     #list classes:
     classes = []
 
@@ -831,20 +831,20 @@ def pymodule2predef(BASEPATH, module_name, module, title):
 
             if value_type == types.FunctionType:
                 pyfunc2predef("", fw, attribute, value, is_class=False)
-                
+
             elif value_type in (types.BuiltinMethodType, types.BuiltinFunctionType):  # both the same at the moment but to be future proof
                 # note: can't get args from these, so dump the string as is
                 # this means any module used like this must have fully formatted docstrings.
                 py_c_func2predef("", fw, module_name, module, attribute, value, is_class=False)
-                
+
             elif value_type == type:
                 classes.append((attribute, value))
-                
+
             elif value_type in (bool, int, float, str, tuple):
                 # constant, not much fun we can do here except to list it.
                 # TODO, figure out some way to document these!
                 fw("{0} = {1} #constant value \n\n".format(attribute,repr(value)))
-                
+
             else:
                 print("\tnot documenting %s.%s" % (module_name, attribute))
                 continue
@@ -855,9 +855,9 @@ def pymodule2predef(BASEPATH, module_name, module, title):
     # write collected classes now
     for (type_name, value) in classes:
         pyclass2predef(fw, module_name, type_name, value)
-        
+
     file.close()
-    
+
 def rna_property2predef(ident, fw, descr):
     ''' Creates declaration of a property
         Details:
@@ -866,8 +866,8 @@ def rna_property2predef(ident, fw, descr):
         @descr (rna_info.InfoPropertyRNA): descriptor of the property
     '''
     definition = doc2definition(rna2list(descr),docstring_ident="")
-    write_indented_lines(ident,fw, definition["declaration"],False)  
-     
+    write_indented_lines(ident,fw, definition["declaration"],False)
+
     if "docstring" in definition:
         write_indented_lines(ident, fw, definition["docstring"], False)
 
@@ -884,12 +884,12 @@ def rna_function2predef(ident, fw, descr):
     if "docstring" in definition:
         write_indented_lines(ident, fw, definition["docstring"], False)
 
-    if "returns" in definition: 
+    if "returns" in definition:
         write_indented_lines(ident+_IDENT,fw,"return " + definition["returns"],False)
     else:
         write_indented_lines(ident+_IDENT,fw,"pass",False)
-        
-    fw("\n")    
+
+    fw("\n")
 
 def rna_struct2predef(ident, fw, descr):
     ''' Creates declaration of a bpy structure
@@ -897,21 +897,21 @@ def rna_struct2predef(ident, fw, descr):
         @ident (string): the required prefix (spaces)
         @fw (function): the unified shortcut to print() or file.write() function
         @descr (rna_info.InfoStructRNA): the descriptor of a Blender Python class
-    ''' 
+    '''
     print("class %s:\n" % descr.identifier)
     definition = doc2definition(rna2list(descr))
-    write_indented_lines(ident,fw, definition["declaration"],False)  
-     
+    write_indented_lines(ident,fw, definition["declaration"],False)
+
     if "docstring" in definition:
         write_indented_lines(ident, fw, definition["docstring"], False)
 
     #native properties
-    ident = ident + _IDENT    
+    ident = ident + _IDENT
     properties = descr.properties
     properties.sort(key= lambda prop: prop.identifier)
     for prop in properties:
         rna_property2predef(ident,fw,prop)
-        
+
     #Python properties
     properties = descr.get_py_properties()
     for identifier, prop in properties:
@@ -921,11 +921,11 @@ def rna_struct2predef(ident, fw, descr):
     functions = descr.functions
     for function in functions:
         rna_function2predef(ident, fw, function)
-    
+
     functions = descr.get_py_functions()
     for identifier, function in functions:
         pyfunc2predef(ident, fw, identifier, function, is_class = True)
-    
+
 def ops_struct2predef(ident, fw, module, operators):
     ''' Creates "pseudostructure" for a given module of operators
         Details:
@@ -936,11 +936,11 @@ def ops_struct2predef(ident, fw, module, operators):
     '''
     fmt = ident + "class {0}:\n"
     fw(fmt.format(module)) #"action" -> "class action:\n"
-    ident = ident+_IDENT     
+    ident = ident+_IDENT
     fw(ident+"'''Spcecial class, created just to reflect content of bpy.ops.{0}'''\n\n".format(module))
-    
+
     operators.sort(key=lambda op: op.func_name)
-    
+
     for operator in operators:
         rna_function2predef(ident, fw, operator)
 
@@ -954,7 +954,7 @@ def bpy_base2predef(ident, fw):
     fw(fmt % _BPY_STRUCT_FAKE)
     ident = ident + _IDENT
     fw(ident + "'''built-in base class for all classes in bpy.types.\n\n")
-    fmt = ident + _IDENT + "Note that bpy.types.%s is not actually available from within blender, it only exists for the purpose of documentation.\n" + ident + "'''\n\n" 
+    fmt = ident + _IDENT + "Note that bpy.types.%s is not actually available from within blender, it only exists for the purpose of documentation.\n" + ident + "'''\n\n"
     fw(fmt % _BPY_STRUCT_FAKE)
 
     descr_items = [(key, descr) for key, descr in sorted(bpy.types.Struct.__bases__[0].__dict__.items()) if not key.startswith("__")]
@@ -967,7 +967,7 @@ def bpy_base2predef(ident, fw):
         if type(descr) == types.GetSetDescriptorType:
             py_descr2predef(ident, fw, descr, "bpy.types", _BPY_STRUCT_FAKE, key)
     fw("\n\n")
-    
+
 def bpy2predef(BASEPATH, title):
     ''' Creates the bpy.predef file. It contains the bpy.dta, bpy.ops, bpy.types
         Arguments:
@@ -990,7 +990,7 @@ def bpy2predef(BASEPATH, title):
             else:
                 pyclass2predef(fw, modulr, name, value)
         fw("\n\n")
-        
+
     #read all data:
     structs, funcs, ops, props = rna_info.BuildRNAInfo()
     #open the file:
@@ -998,20 +998,20 @@ def bpy2predef(BASEPATH, title):
     file = open(filepath, "w")
     fw = file.write
     #Start the file:
-    definition = doc2definition(title,"") #skip the leading spaces at the first line... 
-    fw(definition["docstring"]) 
+    definition = doc2definition(title,"") #skip the leading spaces at the first line...
+    fw(definition["docstring"])
     fw("\n\n")
 
     #the data members:
     property2predef("", fw, bpy, "context")
-    
+
     property2predef("", fw, bpy, "data")
 
-    #group operators by modules: (dictionary of list of the operators) 
+    #group operators by modules: (dictionary of list of the operators)
     op_modules = {}
     for op in ops.values():
         op_modules.setdefault(op.module_name, []).append(op)
-        
+
     #Special declaration of non-existing structiure just fo the ops member:
     fw("class ops:\n")
     fw(_IDENT+"'''Spcecial class, created just to reflect content of bpy.ops'''\n\n")
@@ -1019,14 +1019,14 @@ def bpy2predef(BASEPATH, title):
         if op_module_name == "import":
             continue
         ops_struct2predef(_IDENT, fw, op_module_name, ops_mod)
-    
+
     #classes (Blender structures:)
     fw("class types:\n")
     fw(_IDENT+"'''A container for all Blender types'''\n" + _IDENT + "\n")
-    
+
     #base structure
     bpy_base2predef(_IDENT, fw)
-    
+
     #sort the type names:
     classes = list(structs.values())
     classes.sort(key=lambda cls: cls.identifier)
@@ -1035,9 +1035,9 @@ def bpy2predef(BASEPATH, title):
         # skip the operators!
         if "_OT_" not in cls.identifier:
             rna_struct2predef(_IDENT, fw, cls)
-        
+
     file.close()
-    
+
 def rna2predef(BASEPATH):
 
     try:
@@ -1092,7 +1092,7 @@ def rna2predef(BASEPATH):
     if "aud" in INCLUDE_MODULES:
         import aud as module
         pymodule2predef(BASEPATH, "aud", module, "Audio System (aud)")
-        
+
     del module
 
 def main():
@@ -1102,16 +1102,16 @@ def main():
         print(script_help_msg)
     else:
         import shutil
-        
+
         #these two strange lines below are just to make the debugging easier (to let it run many times from within Blender)
         import imp
         imp.reload(rna_info) #to avoid repeated arguments in function definitions on second and the next runs - a bug in rna_info.py....
-        
+
         if os.path.exists(__file__): #program run from text window has non-existing path ("/" - the root)
             script_dir = os.path.dirname(__file__)
         else:
             script_dir = os.path.join(os.path.curdir) #current directory (where the blender.exe resides)
-            
+
         path_in = os.path.join(script_dir, "pypredef")
         # only for partial updates
         path_in_tmp = path_in + "-tmp"
@@ -1157,9 +1157,9 @@ def main():
                 '''else:
                     print("\tkeeping: %s" % f) # eh, not that useful'''
 
-    
-       
-main() #just run it! Unconditional call makes it easier to debug Blender script in Eclipse, 
+
+
+main() #just run it! Unconditional call makes it easier to debug Blender script in Eclipse,
 #       (using pydev_debug.py). It's doubtful, that it will be imported as additional module.
 
 
